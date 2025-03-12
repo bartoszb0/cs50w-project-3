@@ -1,3 +1,36 @@
 textarea {
     min-height: 400px;
 }
+
+#show-error {
+    color: rgb(168, 32, 32);
+    background-color: rgb(245, 164, 164);
+    text-align: center;
+}
+
+.email-item {
+    border: 1px solid black;
+    height: 50px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.email-sender {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+.email-subject {
+    margin-left: 25px;
+    width: 1200px;
+}
+
+.email-timestamp {
+    display: block;
+    margin-right: 10px;
+    width: 100%;
+    text-align: right;
+    color: rgb(36, 36, 36);
+}
