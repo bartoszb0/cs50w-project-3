@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   function compose_email() {
-    // Delete error
+    // Hide error
     document.querySelector('#show-error').innerHTML = '';
   
     // Show compose view and hide other views
+    document.querySelector('#show-email').style.display = 'none';
     document.querySelector('#emails-view').style.display = 'none';
     document.querySelector('#compose-view').style.display = 'block';
   
@@ -55,10 +56,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function load_mailbox(mailbox) {
-    // Delete error
+    // Hide error
     document.querySelector('#show-error').innerHTML = '';
     
     // Show the mailbox and hide other views
+    document.querySelector('#show-email').style.display = 'none';
     document.querySelector('#emails-view').style.display = 'block';
     document.querySelector('#compose-view').style.display = 'none';
   
@@ -72,35 +74,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Print emails
       console.log(emails);
-      
+
       // For each email - display it
-        for (let i = 0; i < emails.length; i++) {
-          email_div = document.querySelector('#emails-view').appendChild(document.createElement('div'));
-          email_div.classList.add('email-item');
+      for (let i = 0; i < emails.length; i++) {
+        email_div = document.querySelector('#emails-view').appendChild(document.createElement('div'));
+        email_div.classList.add('email-item');
 
-          sender = email_div.appendChild(document.createElement('span'));
-          sender.classList.add('email-sender');
-          sender.innerHTML = emails[i].sender;
+        sender = email_div.appendChild(document.createElement('span'));
+        sender.classList.add('email-sender');
+        sender.innerHTML = emails[i].sender;
 
-          subject = email_div.appendChild(document.createElement('span'));
-          subject.classList.add('email-subject');
-          // Default subject if it wasn't provided
-          if (emails[i].subject) {
-            subject.innerHTML = emails[i].subject;
-          } else {
-            subject.innerHTML = 'No subject';
-          }
-
-          timestamp = email_div.appendChild(document.createElement('span'));
-          timestamp.classList.add('email-timestamp');
-          timestamp.innerHTML = emails[i].timestamp;
-
-          // Change background of an email whether it was read
-          if (emails[i].read === false) {
-            email_div.style.backgroundColor = 'white';
-          } else {
-            email_div.style.backgroundColor = '#d1d1d1';
-          }
+        subject = email_div.appendChild(document.createElement('span'));
+        subject.classList.add('email-subject');
+        // Default subject if it wasn't provided
+        if (emails[i].subject) {
+          subject.innerHTML = emails[i].subject;
+        } else {
+          subject.innerHTML = 'No subject';
         }
+
+        timestamp = email_div.appendChild(document.createElement('span'));
+        timestamp.classList.add('email-timestamp');
+        timestamp.innerHTML = emails[i].timestamp;
+
+        // Change background of an email whether it was read
+        if (emails[i].read === false) {
+          email_div.style.backgroundColor = 'white';
+        } else {
+          email_div.style.backgroundColor = '#d1d1d1';
+        }
+
+        email_div.addEventListener('click', () => display_mail(emails[i].id));
+      }
     });
+  }
+
+  function display_mail(mail_id) {
+    // Hide error
+    document.querySelector('#show-error').innerHTML = '';
+
+    // Show the mailbox and hide other views
+    document.querySelector('#show-email').style.display = 'block';
+    document.querySelector('#emails-view').style.display = 'none';
+
+    fetch(`/emails/${mail_id}`)
+      .then(response => response.json())
+      .then(email => {
+          // Print email
+          console.log(email);
+
+      // Display email info
+      document.querySelector('#email_sender').innerHTML = email.sender;
+      document.querySelector('#email_receiver').innerHTML = email.recipients;
+      if (email.subject) {
+        document.querySelector('#email_subject').innerHTML = email.subject;
+      } else {
+        document.querySelector('#email_subject').innerHTML = 'No subject';
+      }
+      document.querySelector('#email_timestamp').innerHTML = email.timestamp;
+      document.querySelector('#email_body').innerHTML = email.body;
+    });
+
+    // Mark email as read
+    fetch(`/emails/${mail_id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+          read: true
+      })
+    })
   }
