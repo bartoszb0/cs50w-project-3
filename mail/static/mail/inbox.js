@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
     document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
     document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
-    document.querySelector('#compose').addEventListener('click', compose_email);
+    document.querySelector('#compose').onclick = function() { compose_email(); }
   
     // By default, load the inbox
     load_mailbox('inbox');
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   });
   
-  function compose_email() {
+  function compose_email(email=null) {
     // Hide error
     document.querySelector('#show-error').innerHTML = '';
   
@@ -48,11 +48,26 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelector('#show-email').style.display = 'none';
     document.querySelector('#emails-view').style.display = 'none';
     document.querySelector('#compose-view').style.display = 'block';
-  
+
     // Clear out composition fields
     document.querySelector('#compose-recipients').value = '';
     document.querySelector('#compose-subject').value = '';
     document.querySelector('#compose-body').value = '';
+
+
+    if (email) {
+      document.querySelector('#compose-recipients').value = email.sender;
+      document.querySelector('#compose-subject').value = email.subject;
+
+      if (!document.querySelector('#compose-subject').value.startsWith('Re:')) {
+        document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+      }
+
+      document.querySelector('#compose-body').value = `\n\nOn ${email.timestamp} ${email.sender} wrote: ${email.body}\n\n`;
+
+    }
+
+
   }
   
   function load_mailbox(mailbox) {
@@ -132,7 +147,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('#email_subject').innerHTML = 'No subject';
       }
       document.querySelector('#email_timestamp').innerHTML = email.timestamp;
-      document.querySelector('#email_body').innerHTML = email.body;
+      document.querySelector('#email_body').innerHTML = email.body.replace(/\n/g, '<br>');
+
+      // Add button to archive / unarchive mail. Dont show the button on SENT mails.
+      if (email.sender !== document.querySelector('#USER_EMAIL').innerHTML) {
+        document.querySelector('#archive').style.display = 'block';
+        if (email.archived === false) {
+          document.querySelector('#archive').innerHTML = 'Archive';
+        } else {
+          document.querySelector('#archive').innerHTML = 'Unarchive';
+        }
+      } else {
+        document.querySelector('#archive').style.display = 'none';
+      }
+
+      document.querySelector('#archive').onclick = function() { handle_archive(email); }
+      document.querySelector('#reply').onclick = function() { compose_email(email); }
+
     });
 
     // Mark email as read
@@ -142,4 +173,24 @@ document.addEventListener('DOMContentLoaded', function() {
           read: true
       })
     })
+  }
+
+  function handle_archive(email) {
+    if (email.archived === false) {
+      fetch(`/emails/${email.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            archived: true
+        })
+      })
+      .then(() => load_mailbox('inbox'));
+    } else {
+      fetch(`/emails/${email.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            archived: false
+        })
+      })
+      .then(() => load_mailbox('inbox'));
+    }
   }
